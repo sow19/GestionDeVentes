@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Prestations par Années</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center">Prestations par Années</h1>
+    <svg id="chart" width="800" height="400"></svg>
+  </div>
+  <script>
+    const query = `
+      query {
+        prestationsByYear {
+          year
+          totalRevenue
+        }
+      }
+    `;
+
+    fetch("http://localhost:4000/graphql", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const prestations = data.data.prestationsByYear;
+
+      const svg = d3.select("#chart");
+      const margin = { top: 20, right: 20, bottom: 50, left: 50 };
+      const width = +svg.attr("width") - margin.left - margin.right;
+      const height = +svg.attr("height") - margin.top - margin.bottom;
+      const chart = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // Échelles
+      const x = d3.scaleBand()
+        .domain(prestations.map(d => d.year))
+        .range([0, width])
+        .padding(0.1);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(prestations, d => d.totalRevenue)])
+        .nice()
+        .range([height, 0]);
+
+      // Axes
+      chart.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).tickFormat(d => d));
+
+      chart.append("g").call(d3.axisLeft(y));
+
+      // Barres
+      chart.selectAll(".bar")
+        .data(prestations)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", d => x(d.year))
+        .attr("y", d => y(d.totalRevenue))
+        .attr("width", x.bandwidth())
+        .attr("height", d => height - y(d.totalRevenue))
+        .attr("fill", "steelblue");
+    });
+  </script>
+</body>
+</html>
