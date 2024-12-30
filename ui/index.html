@@ -3,15 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Accueil - Mon Site</title>
 
+    <!-- Inclure Bootstrap et vos scripts -->
     <script src="js/navbar.js" defer="true"></script>
     <link rel="stylesheet" href="css/bootstrap.min.css">
-</head>
 
-<div id="navbar"></div>
+    <!-- Styles personnalisés -->
+    <style>
+        /* Assure que le body prend toute la hauteur de la page */
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0; /* Supprime les marges par défaut */
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Le contenu principal s'étend pour remplir l'espace */
+        .container, .hero {
+            flex: 1;
+        }
+
+        .hero {
+            background: linear-gradient(to right, #007bff, #6c757d);
+            color: white;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+        .hero p {
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            font-size: 1rem;
+            padding: 10px 20px;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+        /* Footer toujours en bas */
+        .footer {
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: auto; /* Pousse le footer vers le bas */
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
 <body>
-   
+    <!-- Barre de navigation -->
+    <div id="navbar"></div>
+
+    <!-- Section d'accueil -->
+    <div class="hero">
+        <h1>Bienvenue sur Mon Site</h1>
+        <p>Explorez et visualisez les données des départements.</p>
+        <a href="http://127.0.0.1/france.html" class="btn btn-primary btn-lg">Explorer les Départements</a>
+    </div>
+
+    <!-- Section d'informations -->
+    <div class="container mt-5">
+        <h2 class="text-center">À propos</h2>
+        <p class="text-center">
+            Ce site vous permet d'explorer les statistiques détaillées des départements français.
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2024 Mon Site. Tous droits réservés. <a href="#">Mentions légales</a></p>
+    </div>
+
+    <!-- Bootstrap JS -->
     <script src="js/bootstrap.min.js"></script>
 </body>
 </html>

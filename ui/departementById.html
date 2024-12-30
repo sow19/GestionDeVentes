@@ -6,16 +6,44 @@
     <script src="js/d3.v7.min.js"></script>
     <script src="js/navbar.js" defer="true"></script>
     <link rel="stylesheet" href="css/bootstrap.min.css">
-
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #chart {
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .badge {
+            font-size: 0.9rem;
+            margin-right: 5px;
+        }
+    </style>
 </head>
-<div id="navbar"></div>
 <body>
-    <div id="chart"></div> <!-- Conteneur pour le graphique -->
+    <div id="navbar"></div>
+
     <div class="container vh-100">
-        <div class="row h-100">
-            <div class="col-12 d-flex justify-content-center align-items-center">
-                <!-- Conteneur pour le graphique -->
-                <div id="chart"></div>
+        <div class="row">
+            <!-- Graphique en haut -->
+            <div id="chart" class="col-12"></div>
+        </div>
+        <div class="row mt-4">
+            <!-- Section des cartes pour afficher les prestations -->
+            <div id="cardsContainer" class="row">
+                <!-- Les cartes seront ajoutées dynamiquement ici -->
             </div>
         </div>
     </div>
@@ -25,21 +53,27 @@
         const departmentId = urlParams.get('department');
         
         if (departmentId) {
-            const queryUrl = `http://localhost:4000/?query={prestationsByDpt(departement:"${departmentId}"){description count sum}}`;
+            const queryUrl = `http://localhost:4000/?query={prestationsByDpt(departement:"${departmentId}"){description count sum avg}}`;
             
             d3.json(queryUrl)
                 .then(data => {
+                    console.log("Données récupérées : ", data); 
                     if (data && data.data && data.data.prestationsByDpt) {
                         const prestations = data.data.prestationsByDpt;
 
-                        
                         const chartData = prestations.map(p => ({
                             name: p.description,
                             value: p.sum,
-                            details:p
+                            count: p.count,
+                            sum: p.sum,
+                            avg: p.avg,
                         }));
 
+                        // Dessiner le graphique
                         drawPrestationCircles(chartData);
+
+                        // Afficher les détails dans les cartes
+                        displayDepartmentDetails(chartData);
                     } else {
                         console.error("Données non disponibles pour le département", departmentId);
                     }
@@ -50,8 +84,8 @@
         }
 
         function drawPrestationCircles(data) {
-            const width = 1600;
-            const height = Math.min(width, 650);
+            const width = 600; // Réduction de la taille du graphique
+            const height = Math.min(width, 400);
             const radius = Math.min(width, height) / 2;
 
             const arc = d3.arc()
@@ -99,11 +133,38 @@
                     .attr("x", 0)
                     .attr("y", "0.7em")
                     .attr("fill-opacity", 0.7)
-                    .text(d => d.data.value.toLocaleString("fr-FR")))
-                    .on("click", d => displayDepartmentDetails(d.data.details));
+                    .text(d => d.data.value.toLocaleString("fr-FR")));
+        }
+
+        function displayDepartmentDetails(data) {
+            const container = document.getElementById("cardsContainer");
+
+            // Efface le contenu précédent
+            container.innerHTML = '';
+
+            // Parcourt toutes les prestations et crée une carte pour chacune
+            data.forEach(prestation => {
+                const col = document.createElement("div");
+                col.className = "col-md-4 col-sm-6"; // Colonnes responsives
+
+                col.innerHTML = `
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">${prestation.name}</h5>
+                            <p>
+                                <span class="badge bg-primary">Prestations : ${prestation.count}</span>
+                                <span class="badge bg-success">Somme : ${prestation.sum.toLocaleString("fr-FR")}</span>
+                                <span class="badge bg-warning text-dark">Moyenne : ${prestation.avg.toFixed(2)}</span>
+                            </p>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(col);
+            });
         }
     </script>
-        <script src="js/bootstrap.min.js"></script>
-        
+
+    <script src="js/bootstrap.min.js"></script>
 </body>
 </html>

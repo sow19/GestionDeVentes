@@ -78,36 +78,32 @@ const aggregateDepartments = [
   }
 ]
 
-const aggregateDepartmentYear = [
+const aggregateYearRegionAverage = [
   {
     $group: {
       _id: {
-        year: '$date.year'
+        year: "$date.year",
+        region: "$adresse.region.name",
       },
-      sum: {
-        $sum: '$price'
-      },
-      avg: {
-        $avg: '$price'
-      },
-      count: {
-        $sum: 1
-      }
-    }
+      avgRevenue: { $avg: "$price" },
+    },
   },
   {
     $project: {
-      year: '$_id.year',
-      sum: 1,
-      avg: 1,
-      count: 1,
-      _id: 0
-    }  
+      year: "$_id.year",
+      region: "$_id.region",
+      avgRevenue: 1,
+      _id: 0,
+    },
   },
   {
-    $sort: { year: 1 }
-  }
+    $sort: {
+      year: 1,
+      region: 1,
+    },
+  },
 ];
+
 
 
 
@@ -134,7 +130,10 @@ async function aggregateWithValue(aggregation, key, value) {
     const result = await collection.aggregate(newAggregation).toArray();
     return result;
 }
-
+async function getYearRegionAverage() {
+  const result = await collection.aggregate(aggregateYearRegionAverage).toArray();
+  return result;
+}
 
 // un résolveur simple pour la requête 'books' de type Query
 // qui renvoie la variable 'books'
@@ -150,10 +149,9 @@ const resolvers = {
       prestationsByDpt(root, args, context) {
         return aggregateWithValue(aggregatePrestation, 'adresse.department.id', args.departement);
       },
-      revenueByYear(root, args, context) {
-        return aggregate(aggregateDepartmentYear)
-      }
-  
+      averageRevenueByYearAndRegion(root, args, context) {
+        return getYearRegionAverage();
+    }
     }
 }
 

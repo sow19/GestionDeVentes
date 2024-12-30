@@ -25,13 +25,21 @@ type PrestationYear {
     avg: Float
 }
 
+type YearRegionAverage {
+    year: Int
+    region: String
+    avgRevenue: Float
+}
+
+
 
 type Query{
      prestations: [Prestation]
      departments: [Department]
      books: [Book]
      prestationsByDpt(departement: String): [Prestation]
-     revenueByYear: [PrestationYear]
+     averageRevenueByYearAndRegion: [YearRegionAverage]
+
 }
 
 

@@ -1,71 +1,115 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Prestations par Années</title>
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://d3js.org/d3.v7.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Moyenne des Revenus par Année et Région</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/navbar.js" defer="true"></script>
 </head>
 <body>
-  <div class="container mt-5">
-    <h1 class="text-center">Prestations par Années</h1>
-    <svg id="chart" width="800" height="400"></svg>
-  </div>
-  <script>
-    const query = `
-      query {
-        prestationsByYear {
-          year
-          totalRevenue
-        }
-      }
-    `;
+    <div id="navbar"></div>
 
-    fetch("http://localhost:4000/graphql", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query })
-    })
-    .then(res => res.json())
-    .then(data => {
-      const prestations = data.data.prestationsByYear;
+    <div class="container mt-5">
+        <h1 class="text-center">Moyenne des Revenus par Année et Région</h1>
+        
+        <!-- Liste déroulante pour sélectionner une région -->
+        <div class="form-group mb-4">
+            <label for="regionSelect">Choisir une région :</label>
+            <select id="regionSelect" class="form-control">
+                <option value="">Toutes les régions</option>
+            </select>
+        </div>
 
-      const svg = d3.select("#chart");
-      const margin = { top: 20, right: 20, bottom: 50, left: 50 };
-      const width = +svg.attr("width") - margin.left - margin.right;
-      const height = +svg.attr("height") - margin.top - margin.bottom;
-      const chart = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+        <!-- Conteneur pour les graphiques -->
+        <div id="charts"></div>
+    </div>
 
-      // Échelles
-      const x = d3.scaleBand()
-        .domain(prestations.map(d => d.year))
-        .range([0, width])
-        .padding(0.1);
+    <script>
+        // Fetch des données GraphQL
+        fetch("http://127.0.0.1:4000/?query={averageRevenueByYearAndRegion{year region avgRevenue}}")
+            .then(response => response.json())
+            .then(data => {
+                const averageRevenue = data.data.averageRevenueByYearAndRegion;
 
-      const y = d3.scaleLinear()
-        .domain([0, d3.max(prestations, d => d.totalRevenue)])
-        .nice()
-        .range([height, 0]);
+                // Regrouper les données par région
+                const regions = d3.group(averageRevenue, d => d.region);
 
-      // Axes
-      chart.append("g")
-        .attr("transform", `translate(0,${height})`)
-        .call(d3.axisBottom(x).tickFormat(d => d));
+                // Remplir la liste déroulante avec les régions
+                const regionSelect = document.getElementById("regionSelect");
+                regions.forEach((_, region) => {
+                    const option = document.createElement("option");
+                    option.value = region;
+                    option.textContent = region;
+                    regionSelect.appendChild(option);
+                });
 
-      chart.append("g").call(d3.axisLeft(y));
+                const container = d3.select("#charts");
 
-      // Barres
-      chart.selectAll(".bar")
-        .data(prestations)
-        .enter()
-        .append("rect")
-        .attr("class", "bar")
-        .attr("x", d => x(d.year))
-        .attr("y", d => y(d.totalRevenue))
-        .attr("width", x.bandwidth())
-        .attr("height", d => height - y(d.totalRevenue))
-        .attr("fill", "steelblue");
-    });
-  </script>
+                // Fonction pour afficher les graphiques
+                function renderRegionCharts(region) {
+                    container.html(""); // Efface les graphiques existants
+
+                    const filteredRegions = region ? [[region, regions.get(region)]] : Array.from(regions);
+
+                    filteredRegions.forEach(([region, regionData]) => {
+                        const section = container.append("div").attr("class", "mb-5");
+                        section.append("h2").text(`Région : ${region}`);
+
+                        const svg = section.append("svg")
+                            .attr("width", 800)
+                            .attr("height", 400);
+
+                        const margin = { top: 20, right: 20, bottom: 50, left: 50 };
+                        const width = 800 - margin.left - margin.right;
+                        const height = 400 - margin.top - margin.bottom;
+
+                        const chart = svg.append("g")
+                            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                        // Échelles
+                        const x = d3.scaleBand()
+                            .domain(regionData.map(d => d.year))
+                            .range([0, width])
+                            .padding(0.1);
+
+                        const y = d3.scaleLinear()
+                            .domain([0, d3.max(regionData, d => d.avgRevenue)])
+                            .nice()
+                            .range([height, 0]);
+
+                        // Axes
+                        chart.append("g")
+                            .attr("transform", `translate(0,${height})`)
+                            .call(d3.axisBottom(x));
+
+                        chart.append("g").call(d3.axisLeft(y));
+
+                        // Barres
+                        chart.selectAll(".bar")
+                            .data(regionData)
+                            .enter()
+                            .append("rect")
+                            .attr("class", "bar")
+                            .attr("x", d => x(d.year))
+                            .attr("y", d => y(d.avgRevenue))
+                            .attr("width", x.bandwidth())
+                            .attr("height", d => height - y(d.avgRevenue))
+                            .attr("fill", "steelblue");
+                    });
+                }
+
+                // Affichage initial : Toutes les régions
+                renderRegionCharts("");
+
+                // Écouteur pour la liste déroulante
+                regionSelect.addEventListener("change", function () {
+                    const selectedRegion = this.value;
+                    renderRegionCharts(selectedRegion);
+                });
+            })
+            .catch(error => console.error("Erreur lors de la récupération des données :", error));
+    </script>
+    <script src="js/bootstrap.min.js"></script>
 </body>
 </html>
